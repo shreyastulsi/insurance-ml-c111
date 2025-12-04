@@ -27,25 +27,9 @@ sns.set_style("whitegrid")
 plt.rcParams["figure.figsize"] = (12, 8)
 
 def load_data(csv_path):
-    df = pd.read_csv(csv_path)
-    print("=" * 80)
-    print("STEP 1: LOADING DATA")
-    print("=" * 80)
-    print(f"\nDataset shape: {df.shape}")
-    print(f"\nFirst few rows:\n{df.head()}")
-    print(f"\nDataset info:\n{df.info()}")
-    print(f"\nBasic statistics:\n{df.describe()}")
-    print(f"\nMissing values:\n{df.isnull().sum()}")
-    print(f"\nUnique values in categorical columns:")
-    for col in ["sex", "smoker", "region"]:
-        print(f"  {col}: {df[col].unique()}")
-    return df
+    return pd.read_csv(csv_path)
 
 def explore_data(df, output_dir):
-    print("\n" + "=" * 80)
-    print("STEP 2: EXPLORATORY DATA ANALYSIS")
-    print("=" * 80)
-    
     numeric_cols = df.select_dtypes(include=[np.number]).columns
     corr_matrix = df[numeric_cols].corr()
     
@@ -55,7 +39,6 @@ def explore_data(df, output_dir):
     plt.tight_layout()
     plt.savefig(output_dir / "correlation_heatmap.png", dpi=150)
     plt.close()
-    print("✓ Saved correlation heatmap")
     
     fig, axes = plt.subplots(2, 2, figsize=(15, 12))
     axes[0, 0].hist(df["charges"], bins=50, edgecolor="black", alpha=0.7)
@@ -85,18 +68,8 @@ def explore_data(df, output_dir):
     plt.tight_layout()
     plt.savefig(output_dir / "eda_visualizations.png", dpi=150)
     plt.close()
-    print("✓ Saved EDA visualizations")
-    
-    print("\nFeature correlations with charges:")
-    if "charges" in numeric_cols:
-        correlations = df[numeric_cols].corr()["charges"].abs().sort_values(ascending=False)
-        print(correlations)
 
 def preprocess_data(df):
-    print("\n" + "=" * 80)
-    print("STEP 3: DATA PREPROCESSING")
-    print("=" * 80)
-    
     df_processed = df.copy()
     categorical_cols = ["sex", "smoker", "region"]
     label_encoders = {}
@@ -105,27 +78,19 @@ def preprocess_data(df):
         le = LabelEncoder()
         df_processed[col] = le.fit_transform(df_processed[col])
         label_encoders[col] = le
-        print(f"✓ Encoded {col}: {dict(zip(le.classes_, le.transform(le.classes_)))}")
     
     X = df_processed.drop("charges", axis=1).values
     y = df_processed["charges"].values
     
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    print(f"\n✓ Train set: {X_train.shape[0]} samples")
-    print(f"✓ Test set: {X_test.shape[0]} samples")
     
     scaler = StandardScaler()
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
-    print("✓ Features scaled using StandardScaler")
     
     return X_train, X_test, y_train, y_test
 
 def train_models(X_train, y_train):
-    print("\n" + "=" * 80)
-    print("STEP 4: TRAINING MODELS")
-    print("=" * 80)
-    
     models = {
         "Linear Regression": LinearRegression(),
         "Random Forest": RandomForestRegressor(n_estimators=100, random_state=42, max_depth=10),
@@ -139,17 +104,11 @@ def train_models(X_train, y_train):
         )
     
     for name, model in models.items():
-        print(f"\nTraining {name}...")
         model.fit(X_train, y_train)
-        print(f"✓ {name} trained successfully")
     
     return models
 
 def evaluate_models(models, X_test, y_test, output_dir):
-    print("\n" + "=" * 80)
-    print("STEP 5: MODEL EVALUATION")
-    print("=" * 80)
-    
     results = {}
     predictions = {}
     
@@ -163,28 +122,13 @@ def evaluate_models(models, X_test, y_test, output_dir):
         mape = mean_absolute_percentage_error(y_test, y_pred)
         
         results[name] = {"R² Score": r2, "MAE": mae, "RMSE": rmse, "MAPE": mape}
-        
-        print(f"\n{name}:")
-        print(f"  R² Score:  {r2:.4f}")
-        print(f"  MAE:       ${mae:,.2f}")
-        print(f"  RMSE:      ${rmse:,.2f}")
-        print(f"  MAPE:      {mape:.2%}")
     
     results_df = pd.DataFrame(results).T.sort_values("R² Score", ascending=False)
-    print("\n" + "=" * 80)
-    print("MODEL COMPARISON (sorted by R² Score):")
-    print("=" * 80)
-    print(results_df.to_string())
     results_df.to_csv(output_dir / "model_comparison.csv")
-    print(f"\n✓ Saved model comparison to {output_dir / 'model_comparison.csv'}")
     
     return results, predictions
 
 def visualize_results(results, predictions, models, y_test, output_dir):
-    print("\n" + "=" * 80)
-    print("STEP 6: CREATING VISUALIZATIONS")
-    print("=" * 80)
-    
     results_df = pd.DataFrame(results).T
     fig, axes = plt.subplots(2, 2, figsize=(16, 12))
     
@@ -211,7 +155,6 @@ def visualize_results(results, predictions, models, y_test, output_dir):
     plt.tight_layout()
     plt.savefig(output_dir / "model_comparison_metrics.png", dpi=150)
     plt.close()
-    print("✓ Saved model comparison metrics")
     
     best_model = max(results.items(), key=lambda x: x[1]["R² Score"])[0]
     y_pred_best = predictions[best_model]
@@ -251,7 +194,6 @@ def visualize_results(results, predictions, models, y_test, output_dir):
     plt.tight_layout()
     plt.savefig(output_dir / f"best_model_analysis_{best_model.replace(' ', '_')}.png", dpi=150)
     plt.close()
-    print(f"✓ Saved best model analysis ({best_model})")
     
     tree_models = {name: model for name, model in models.items() if hasattr(model, "feature_importances_")}
     
@@ -277,13 +219,8 @@ def visualize_results(results, predictions, models, y_test, output_dir):
         plt.tight_layout()
         plt.savefig(output_dir / "feature_importance.png", dpi=150)
         plt.close()
-        print("✓ Saved feature importance plots")
 
 def generate_report(df, results, models, output_dir):
-    print("\n" + "=" * 80)
-    print("STEP 7: GENERATING ANALYSIS REPORT")
-    print("=" * 80)
-    
     best_name, best_metrics = max(results.items(), key=lambda x: x[1]["R² Score"])
     
     report = []
@@ -355,51 +292,6 @@ def generate_report(df, results, models, output_dir):
             report.append(f"  {feature}: {importance:.4f}")
         report.append("")
     
-    report.append("CONCLUSIONS AND RECOMMENDATIONS")
-    report.append("-" * 80)
-    report.append("")
-    report.append("1. MODEL PERFORMANCE:")
-    report.append(f"   The {best_name} model achieved the best performance with an R² score of {best_metrics['R² Score']:.4f}.")
-    report.append(f"   This means the model explains approximately {best_metrics['R² Score']*100:.1f}% of the variance in insurance charges.")
-    report.append("")
-    
-    report.append("2. PREDICTION ACCURACY:")
-    report.append(f"   On average, predictions deviate by ${best_metrics['MAE']:,.2f} from actual charges.")
-    report.append(f"   The mean absolute percentage error of {best_metrics['MAPE']:.2%} indicates reasonable prediction accuracy.")
-    report.append("")
-    
-    report.append("3. KEY FACTORS INFLUENCING CHARGES:")
-    if hasattr(models[best_name], "feature_importances_"):
-        importances = models[best_name].feature_importances_
-        feature_names = ["age", "sex", "bmi", "children", "smoker", "region"]
-        top_features = sorted(zip(feature_names, importances), key=lambda x: x[1], reverse=True)[:3]
-        report.append("   Based on feature importance analysis, the top factors are:")
-        for i, (feature, importance) in enumerate(top_features, 1):
-            report.append(f"   {i}. {feature} (importance: {importance:.4f})")
-    else:
-        report.append("   Based on correlation analysis, key factors include:")
-        if "charges" in numeric_cols:
-            correlations = df[numeric_cols].corr()["charges"].abs().sort_values(ascending=False)
-            top_corr = [(f, c) for f, c in correlations.items() if f != "charges"][:3]
-            for i, (feature, corr) in enumerate(top_corr, 1):
-                report.append(f"   {i}. {feature} (correlation: {corr:.4f})")
-    report.append("")
-    
-    report.append("4. BUSINESS INSIGHTS:")
-    report.append("   • Smoking status has a significant impact on insurance charges.")
-    report.append("   • Age and BMI are important demographic factors in pricing.")
-    report.append("   • The models can be used to predict charges for new customers.")
-    report.append("   • Feature engineering and hyperparameter tuning could further improve performance.")
-    report.append("")
-    
-    report.append("5. RECOMMENDATIONS FOR IMPROVEMENT:")
-    report.append("   • Collect more data to improve model generalization")
-    report.append("   • Perform hyperparameter tuning using grid search or random search")
-    report.append("   • Consider ensemble methods combining multiple models")
-    report.append("   • Explore polynomial features or feature interactions")
-    report.append("   • Implement cross-validation for more robust evaluation")
-    report.append("")
-    
     report.append("=" * 80)
     report.append("END OF REPORT")
     report.append("=" * 80)
@@ -407,7 +299,6 @@ def generate_report(df, results, models, output_dir):
     report_text = "\n".join(report)
     report_path = output_dir / "analysis_report.txt"
     report_path.write_text(report_text)
-    print(f"✓ Saved analysis report to {report_path}")
     
     json_results = {
         "best_model": best_name,
@@ -421,48 +312,18 @@ def generate_report(df, results, models, output_dir):
     }
     json_path = output_dir / "results.json"
     json_path.write_text(json.dumps(json_results, indent=2))
-    print(f"✓ Saved results JSON to {json_path}")
-    
-    print("\n" + report_text)
 
 def main():
     script_dir = Path(__file__).parent
     output_dir = Path("ml_results")
     output_dir.mkdir(exist_ok=True)
-    
-    try:
-        import kagglehub
-        print("Downloading dataset from Kaggle...")
-        dataset_path = kagglehub.dataset_download("mirichoi0218/insurance")
-        csv_path = Path(dataset_path) / "insurance.csv"
-        if not csv_path.exists():
-            raise FileNotFoundError(f"Dataset file not found at {csv_path}")
-    except ImportError:
-        print("kagglehub not available. Looking for local dataset...")
-        possible_paths = [
-            script_dir / "insurance.csv",
-            script_dir / "data" / "insurance.csv",
-            Path.home() / ".kaggle" / "datasets" / "mirichoi0218" / "insurance" / "insurance.csv",
-        ]
-        csv_path = None
-        for path in possible_paths:
-            if path.exists():
-                csv_path = path
-                break
-        
-        if csv_path is None:
-            print("ERROR: Could not find insurance.csv dataset.")
-            print("Please either:")
-            print("  1. Install kagglehub: pip install kagglehub")
-            print("  2. Place insurance.csv in the same directory as this script")
-            sys.exit(1)
-    
-    print(f"Using dataset: {csv_path}")
-    
-    print("\n" + "=" * 80)
-    print("STARTING COMPREHENSIVE ML ANALYSIS")
-    print("=" * 80)
-    
+
+    # Expect a local insurance.csv next to this script.
+    csv_path = script_dir / "insurance.csv"
+    if not csv_path.exists():
+        print("ERROR: insurance.csv not found next to ml_analysis.py")
+        sys.exit(1)
+
     df = load_data(csv_path)
     explore_data(df, output_dir)
     X_train, X_test, y_train, y_test = preprocess_data(df)
@@ -470,14 +331,6 @@ def main():
     results, predictions = evaluate_models(models, X_test, y_test, output_dir)
     visualize_results(results, predictions, models, y_test, output_dir)
     generate_report(df, results, models, output_dir)
-    
-    print("\n" + "=" * 80)
-    print("ANALYSIS COMPLETE!")
-    print("=" * 80)
-    print(f"\nAll results saved to: {output_dir.absolute()}")
-    print("\nGenerated files:")
-    for file in sorted(output_dir.glob("*")):
-        print(f"  • {file.name}")
 
 if __name__ == "__main__":
     main()
