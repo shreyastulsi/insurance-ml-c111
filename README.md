@@ -2,11 +2,10 @@
 
 Minimal steps to run the full pipeline from scratch.
 
-```bash
-https://github.com/shreyastulsi/insurance-ml-c111.git
-```
-
 ## Clone Repo
+```bash
+git clone https://github.com/shreyastulsi/insurance-ml-c111.git
+```
 ## Setup
 ```bash
 python -m venv .venv
