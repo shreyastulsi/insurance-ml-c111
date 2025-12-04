@@ -2,6 +2,7 @@
 
 Minimal steps to run the full pipeline from scratch.
 
+## Clone Repo
 ## Setup
 ```bash
 python -m venv .venv
